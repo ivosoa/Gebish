@@ -1,0 +1,60 @@
+apply plugin: "groovy"
+
+repositories {
+    mavenCentral()
+}
+
+def drivers = ['htmlunit', 'firefox']
+
+
+dependencies {
+    def groovyVersion = '2.4.7'
+    def gebVersion = '1.1.1'
+    def spockCoreVersion = '1.0-groovy-2.4'
+    def seleniumVersion = '2.52.0'
+    def gebJUnitVersion = '1.1.1'
+    def junitVersion = '4.8.2'
+    
+    compile "org.codehaus.groovy:groovy-all:$groovyVersion"
+
+    // If using Spock, need to depend on geb-spock
+    testCompile "org.gebish:geb-spock:$gebVersion"
+    testCompile "org.spockframework:spock-core:$spockCoreVersion"
+
+    // If using JUnit, need to depend on geb-junit (3 or 4)
+    testCompile "org.gebish:geb-junit4:$gebJUnitVersion"
+    testCompile "junit:junit-dep:$junitVersion"
+
+    // Need a driver implementation
+    testCompile "org.seleniumhq.selenium:selenium-firefox-driver:$seleniumVersion"
+    testCompile "org.seleniumhq.selenium:selenium-htmlunit-driver:$seleniumVersion"
+    testRuntime "org.seleniumhq.selenium:selenium-support:$seleniumVersion"
+}
+
+drivers.each { driver ->
+  task "${driver}Test"(type: Test) {
+
+    systemProperty "geb.build.reportsDir", "$reportsDir/$name/geb"
+    systemProperty "geb.env", driver
+    
+    // If you wanted to set the baseUrl in your build…
+    // systemProperty "geb.build.baseUrl", "http://myapp.com"
+    systemProperty "capture.env", "false"
+
+    systemProperties "geb.build.baseUrl": "https://www.google.com"
+
+    //need firefox ?
+    // ref https://github.com/literalice/sample-geb-spock/blob/master/build.gradle
+    if (rootProject.hasProperty("browser.bin")) {
+        systemProperties "webdriver.firefox.bin":rootProject["browser.bin"]
+    }
+    if (rootProject.hasProperty("env")) {
+        systemProperties "geb.env":rootProject["env"]
+    }
+  }
+}
+
+test {
+     reports.html.enabled = false
+     systemProperty "com.example.test.remoteWebDriverUrl", "https://www.google.de"
+}
